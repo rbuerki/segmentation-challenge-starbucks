@@ -1,0 +1,131 @@
+Unsupervised Learning to find distinct customer segments based on their purchasing behaviour.
+
+Tough cleaning, intense preprocessing, fine-tuned dimensionality reduction with PCA and clustering with k-means, lot's of visual exploration - this dataset is a hard nut to crack! It contains simulated data that mimics the behavior for 17'000 customers on the Starbucks rewards mobile app over the course of 29 days. 
+
+Once every few days, Starbucks sends out an offer to users of the mobile app. An offer can be merely an advertisement for a drink or an actual offer such as a discount or BOGO (buy-one-get-one-free). 
+
+As can be seen from the following simple plot the offers seem to work. A release of offers is followed by offer viewings, a spike in transactions and eventually, if a spending treshold is met, with offer completions that lead to a reward.
+
+[graph 1]
+
+
+The goal is to combine 3 sets of transaction, demographic and offer data to determine which customer groups respond best to which offer type. 
+
+There's two things making this a real challenge:
+
+1) There is no apparent experimental setup and we have no control over the variables: Not all users receive the same offers or even the same amount of offers. During certain weeks some customers may receive multiple offers at the same time, while others don't receive any at all. Also the different offers have different characteristics making their successful completion more or less likely - that again makes a comparision between offer types very difficult.
+
+2) The transaction data needs extensive and pretty complex preparation. The transactions made by a customer are not linked to any offers he has received (we have to do that) and even when an offer is sent to a customer this doen't mean he has viewed it and hence is influenced by it. Also we have to make sure that we only count the valid offer completions, that's those that occur within the actual duration period of an offer.
+
+I will present my findings in 5 sections:
+
+
+1) cleaning to eliminate wrong schlüsse
+2) general comparision of offers / offer types
+3) clusters / segments with different responses
+4) Segment analysis
+5) Conclusions & Learnings
+
+
+1) Cleaning
+
+With help of the offer duration I first flagged all events that could be linked to an offer starting from the moment it was received. 
+
+In a second iteration I made sure that only events that occured after actual viewing of an offer were counted. If the customer completed it early I stopped the flagging accordingly. (I did this with some intervined for loops, a procedure running for twenty f***king hours on my computer ...). We won't go into the details here but I'd like to show a
+
+I can show the input and output for one random customer:
+
+[graph 2 / 3, p88, including explanation]
+
+
+2) General comparision of offers and offer types
+
+Again I think there are too many uncontroled variables to compare the different offers directly and find meaningfull results that really matter (altough there are some general trends for sure, see my EDA notebook if you want).
+
+There is a somewhat more robust trend if we aggregate the offers by type and compare some key metrics:
+
+[table 4, agg offer types]
+
+Findings: It is clear to see, that the view-to-complete rate (rate of offers that have actually been viewed by a customer to their valid completion within offer duration) is significantly higher for discount offers than for bogo offers. This is despite the fact that the rewards for bogos are much higher. (The higher difficulty of discounts is offset by their longer duration: the 'relative difficulty', calculated as the mean amount to be spent per offer day to reach the completion threshold, is quite similar.)
+
+So this is interesting - why would you want to send out expensive bogos when you can have higer activation with cheaper discounts?
+
+Now we should ask ourselves:
+- have the two offer types been viewed by approx the same groups of customers?
+- are there certain customer clusters that are responsible for the differences?
+
+Despite diving deep into EDA, I was not able to find clear patterns or distinctive demographic segments that I could identify as beiing especially pro the one type or the other.
+
+3) PCA / Clustering
+
+The dataframe I worked with now had a row for every customer and a lot of constructed features describing his overall purchasing behaviour and the behaviour concerning each offer type specifically. I also added the non-promo condition as a fourth offer type.
+
+As our main goal is to find out if the purchasing pattern differ for different demographic groups, I removed all demographic features (including the duration of membership) from the set. I think this is important and something that often gets' done wrong.
+
+There is a lot of experimentation documented in my repository considering pre-processing, and fine-tuning of PCA and clustering. To make a long (and intersting) story short: I log-transformed my data, removed some outliers, scaled it to a range of 0,1, applied a PCA to reduce the feature space to 2 dimensions and the clustered with k-means to have 12 segments.
+
+A note to outlier removal: yep, I removed approx 5% of the customers. But I really prefer to have a more general model than to make compromises for customers that behave so special that your proposed treatments don't apply to them anyway.
+
+See 2 plots showing the results of this procedure:
+
+[graph 4 barplot, graph 5 segments in bi-plot, with explanations]
+
+
+4a) Segment Analysis - customer behaviour
+
+Remember that the 12 segments have been based on purchasing behaviour only. The cool thing here is that they let me control for the exposure of the respective customers to different offer types. The findings are listed below in somewhat simplified form. (For simplicity's sake I wont mention info offers in the segment descriptions, but will add a remark in the end)
+
+First group of segments - customers that have viewed BOGO offers and discounts in a similar share:
+
+- Seg 1 (15.4% of total customers, biggest segment): Customers with highest spending / net revenue, react very well to discounts (mean view-to-complete rate of 0.9) and nearly as good to BOGOs (0.8)
+
+- Seg 2 (14%, 2nd biggest segment): Customes with 2nd higest spending / net revenue, same vtc rate on discounts as Seg 1 but BOGO vtc rate drops to 0.6
+
+- Seg 5 (5.1%): Now that's intersting. These customers react well on BOGO offers (vtc rate 0.7), but seem to detest discounts (vtc rate 0.05).
+
+- Seg 12 (8.4%): And here it's the other way round: Discounts are ok (vtc rate 0.7), viewed BOGO are completed to less than 1%.
+
+Second group of segments - medium spending customers that have only been exposed to BOGO offers or to discounts only:
+
+- Seg 3 (6.7%) and Seg 6 (9.9%): Have seen BOGO only. Seg 3 reacts ok with vtc rate of 0.7, Seg 6 considerably less with a vtc rate of 0.4.
+
+- Seg 4 (6%) and Seg 8 (7.2%): Have seen Discounts only. Both Segments react ok with a vtc of 0.8 and 0.7 respectively. (One bigger difference here is that Segment 8 was exposed to a high share of informational offers, see remark below.)
+
+3rd group of low spenders that could not be activated through offers:
+
+- Seg 10 (8.7%): Quite regular customers (6 transactions a month vs. overall average of 8) that spend smell amounts only (total spending is only 25% of overall average). They view the offers on the app regularly, but do not react to BOGOs and discounts (vtc rate close to 0 for both).
+
+- Seg 11 (5.7%): Similar to Seg 10 but have viewed no discounts. The average transaction amount is a little higher, so maybe there would be a chance to tickle them with some discounts. But probably they won't move to much.
+
+- Seg 2 (3.8%): Similar to 11 but have viewed no BOGO. Maybe worth a try.
+
+[Viz of Boxplots 2x vtc and total spending on 2nd y-axis]
+
+
+[Viz of correlation from prop_offertype_amount to prop_offertype_viewed]
+
+
+4b) Analysis of Demographic Groups
+
+In a next step I appended the segment predictions to the demographic customer information (note, I dropped  all 2'175 customers for which we have no demographic info, so that left us with 14'167 customers to analyze because of the removed outliers. Should still be enough to receive valid results.)
+
+The analysis focuses again on preference of specific user groups for BOGOs vs. discounts. In that respect the segments 5 (complete more than 2 3rds of viewed BOGOs, but no discounts) an 12 (just the opposite) seem the most promising to show a clear difference. I hoped for a clear pattern doing some scatterplots with different combinations of demographic features - unfortunately nothing was to be seen.
+
+Looking at the features in isolation the pattern becomes clearer (and it is consistent for all pairs of segment comparisions, as can be seen in this notebook). Generally younger, lower income, male customers prefer discounts to BOGOs. 
+
+
+5) Conlusions and Learnings
+
+
+Try to construct metrics / features that control for some of the variables.
+
+Goal for starbucks
+
+if possible substitute
+- info for discount
+- discount for bogo
+
+It's more like an observational study than an experiment evaluation so this means 
+We typically cannot infer causality in an observational study due to our lack of control over the variables.
+
+overall 65% cleaning & EDA (at least), 15% modelling, 20%  analysis and report
