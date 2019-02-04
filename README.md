@@ -8,7 +8,7 @@ The data contains 3 sets of 'events', demographic customer data and offer data. 
 
 What made this task extremely hard, was the structure of the data, that demanded a lot of cleaning and the lack of any experimental setup, so that there was barely any variable control. With help of PCA and k-means clustering, 12 distinct segments could be identified based on their purchasing behavior. They were each exposed to certain offer types and reacted to them in different ways. A conclusion on demographic customer groups showed only minor success.
 
-An overview over the project and a more thorough discussion of the results can be found in this Medium [blogpost]().
+An overview over the project and a more thorough discussion of the results can be found in this Medium [blogpost](https://medium.com/@raph_91654/starbucks-challenge-find-hidden-customer-segments-with-unsupervised-learning-cf81081cc324).
 
 ### Install
 
