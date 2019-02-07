@@ -378,7 +378,7 @@ def apply_box_cox(df, cols_to_transform=None, treat_NaN=False, rename=False):
     return df
 
 
-    def apply_yeo_j(df, cols_to_transform=None, treat_NaN=False, rename=False):
+def apply_yeo_j(df, cols_to_transform=None, treat_NaN=False, rename=False):
     """Transform values of selected columns with yeo-johnson. Returns transformed 
     DataFrame, column names have "_yj" appended if parameter is set.
     NOTE: Cannot handle NaN but contrary to box-cox yeo-johnson works also on 
